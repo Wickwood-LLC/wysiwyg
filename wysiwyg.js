@@ -53,6 +53,7 @@ Drupal.behaviors.attachWysiwyg = {
         params[format].format = format;
         params[format].trigger = this.id;
         params[format].field = params.field;
+        params[format].summary = params.summary;
       }
       var format = 'format' + this.value;
       // Directly attach this editor, if the input format is enabled or there is
@@ -114,6 +115,7 @@ Drupal.behaviors.attachWysiwyg = {
  */
 Drupal.wysiwygAttach = function(context, params) {
   if (typeof Drupal.wysiwyg.editor.attach[params.editor] == 'function') {
+    var originalField = params.field;
     // (Re-)initialize field instance.
     Drupal.wysiwyg.instances[params.field] = {};
     // Provide all input format parameters to editor instance.
@@ -121,6 +123,16 @@ Drupal.wysiwygAttach = function(context, params) {
     // Provide editor callbacks for plugins, if available.
     if (typeof Drupal.wysiwyg.editor.instance[params.editor] == 'object') {
       jQuery.extend(Drupal.wysiwyg.instances[params.field], Drupal.wysiwyg.editor.instance[params.editor]);
+    }
+    if (params.summary) {
+      // Do the same for the summary field instance.
+      params.field = params.summary;
+      Drupal.wysiwyg.instances[params.field] = {};
+      jQuery.extend(Drupal.wysiwyg.instances[params.field], params);
+      if (typeof Drupal.wysiwyg.editor.instance[params.editor] == 'object') {
+        jQuery.extend(Drupal.wysiwyg.instances[params.field], Drupal.wysiwyg.editor.instance[params.editor]);
+      }
+      params.field = originalField;
     }
     // Store this field id, so (external) plugins can use it.
     // @todo Wrong point in time. Probably can only supported by editors which
@@ -137,11 +149,22 @@ Drupal.wysiwygAttach = function(context, params) {
     // Attach editor, if enabled by default or last state was enabled.
     if (params.status) {
       Drupal.wysiwyg.editor.attach[params.editor](context, params, (Drupal.settings.wysiwyg.configs[params.editor] ? jQuery.extend(true, {}, Drupal.settings.wysiwyg.configs[params.editor][params.format]) : {}));
+      if (params.summary) {
+        params.field = params.summary;
+        Drupal.wysiwyg.editor.attach[params.editor](context, params, (Drupal.settings.wysiwyg.configs[params.editor] ? jQuery.extend(true, {}, Drupal.settings.wysiwyg.configs[params.editor][params.format]) : {}));
+        params.field = originalField;
+      }
     }
     // Otherwise, attach default behaviors.
     else {
       Drupal.wysiwyg.editor.attach.none(context, params);
       Drupal.wysiwyg.instances[params.field].editor = 'none';
+      if (params.summary) {
+        params.field = params.summary;
+        Drupal.wysiwyg.editor.attach.none(context, params);
+        Drupal.wysiwyg.instances[params.field].editor = 'none';
+        params.field = originalField;
+      }
     }
   }
 };
@@ -167,6 +190,12 @@ Drupal.wysiwygDetach = function (context, params, trigger) {
   var editor = Drupal.wysiwyg.instances[params.field].editor;
   if (jQuery.isFunction(Drupal.wysiwyg.editor.detach[editor])) {
     Drupal.wysiwyg.editor.detach[editor](context, params, trigger);
+    if (params.summary) {
+      var originalField = params.field;
+      params.field = params.summary;
+      Drupal.wysiwyg.editor.detach[editor](context, params, trigger);
+      params.field = originalField;
+    }
   }
 };
 
@@ -204,6 +233,7 @@ Drupal.wysiwygAttachToggleLink = function(context, params) {
 Drupal.wysiwyg.toggleWysiwyg = function (event) {
   var context = event.data.context;
   var params = event.data.params;
+  var originalField = params.field;
   if (params.status) {
     // Detach current editor.
     params.status = false;
@@ -214,11 +244,24 @@ Drupal.wysiwyg.toggleWysiwyg = function (event) {
     Drupal.wysiwyg.instances[params.field] = Drupal.wysiwyg.editor.instance.none;
     Drupal.wysiwyg.instances[params.field].editor = 'none';
     Drupal.wysiwyg.instances[params.field].field = params.field;
+    if (params.summary) {
+      params.field = params.summary;
+      Drupal.wysiwyg.editor.attach.none(context, params);
+      Drupal.wysiwyg.instances[params.field] = Drupal.wysiwyg.editor.instance.none;
+      Drupal.wysiwyg.instances[params.field].editor = 'none';
+      Drupal.wysiwyg.instances[params.field].field = params.field;
+      params.field = originalField;
+    }
     $(this).html(Drupal.settings.wysiwyg.enable).blur();
   }
   else {
     // Before enabling the editor, detach default behaviors.
     Drupal.wysiwyg.editor.detach.none(context, params);
+    if (params.summary) {
+      params.field = params.summary;
+      Drupal.wysiwyg.editor.detach.none(context, params);
+      params.field = originalField;
+    }
     // Attach new editor using parameters of the currently selected input format.
     params = Drupal.settings.wysiwyg.triggers[params.trigger]['format' + $('#' + params.trigger).val()];
     params.status = true;
