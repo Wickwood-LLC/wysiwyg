@@ -1,10 +1,12 @@
 name = Wysiwyg
-description = Allows to edit content with client-side editors.
+description = Allows to edit content with client-side editors. WWM applied patch wysiwyg-741606.45.patch from
+https://drupal.org/node/741606#comment-7404872 to WYSIWYG editors to exposed summary fields.
 package = User interface
 ;dependencies[] = libraries
 ;dependencies[] = ctools
 ;dependencies[] = debug
 core = 7.x
+version = 7.x-2.x-dev-wwm
 configure = admin/config/content/wysiwyg
 files[] = wysiwyg.module
 files[] = tests/wysiwyg.test
