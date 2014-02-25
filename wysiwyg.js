@@ -238,7 +238,7 @@ function detachFromField(context, params, trigger) {
     $(a).attr({ id: 'wysiwyg-toggle-' + params.field, href: 'javascript:void(0);' }).append(text);
     var div = document.createElement('div');
     $(div).addClass('wysiwyg-toggle-wrapper').append(a);
-    $('#' + params.field).after(div);
+    $('#' + params.trigger).parents('.fieldset-wrapper').prepend(div);
   }
   $('#wysiwyg-toggle-' + params.field)
     .html(params.status ? Drupal.settings.wysiwyg.disable : Drupal.settings.wysiwyg.enable).show()
